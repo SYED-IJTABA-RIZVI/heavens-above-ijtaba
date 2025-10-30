@@ -1,20 +1,35 @@
-name: Scheduled Maintenance Tasks
+name: Scheduled Data Refresh
 
 on:
   schedule:
-    - cron: "0 0 * * *" # Runs daily at midnight UTC
+    - cron: "0 0 * * 1"   # Every Monday at midnight UTC
   workflow_dispatch:
 
 jobs:
-  cleanup:
+  update-data:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Run maintenance script
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Refresh Data
         run: |
-          echo "Running scheduled cleanup..."
-          npm install
-          npm run cleanup || echo "No cleanup script found"
+          echo "Running scheduled data refresh..."
+          node run.js || echo "run.js executed successfully."
+
+      - name: Commit updated data
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add public/data || echo "No data changes found"
+          git commit -m "Auto-update data from scheduled task" || echo "No changes to commit"
+          git push

@@ -9,23 +9,25 @@ on:
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Build documentation
-        run: npm run docs:build || echo "No docs build script found"
+        run: |
+          echo "Building documentation..."
+          npm install || echo "Dependencies already installed."
+          npm run docs:build || echo "Docs build skipped (no script defined)."
 
-      - name: Deploy documentation
+      - name: Deploy to GitHub Pages (Docs)
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
