@@ -2,17 +2,36 @@ name: Automated Dependency Updates
 
 on:
   schedule:
-    - cron: "0 0 * * 1" # Every Monday
+    - cron: "0 0 * * 1"   # Every Monday
   workflow_dispatch:
 
 jobs:
-  dependency-updates:
+  update-dependencies:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Enable Dependabot metadata
-        uses: dependabot/fetch-metadata@v2
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          node-version: 20
+
+      - name: Update npm dependencies
+        run: |
+          echo "Checking and updating npm dependencies..."
+          npm install -g npm-check-updates
+          ncu -u   # Updates package.json versions
+          npm install
+
+      - name: Commit and push dependency updates
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add package*.json
+          git commit -m "Automated dependency update" || echo "No changes to commit"
+          git push
